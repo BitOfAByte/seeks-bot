@@ -1,5 +1,5 @@
 import {ICommand} from "wokcommands";
-import {MessageEmbed, TextChannel} from "discord.js";
+import {MessageEmbed, TextChannel, User} from "discord.js";
 
 let questions = [
     "**What is the reason for this case?**",
@@ -25,6 +25,7 @@ export default {
             reason: "Support requested",
             type: 'GUILD_TEXT',
             nsfw: false,
+            parent: '923338193879830558',
             permissionOverwrites: [
                 {
                     id: message.author.id,
@@ -33,19 +34,19 @@ export default {
                 {
                     id: message.guild?.roles.everyone,
                     deny: ['VIEW_CHANNEL']
-                }
+                    }
             ]
         }).then(async channel => {
             await channel.send(questions[questionCounter++])
 
-            const filter = (m) => {
+            const filter = (m: any) => {
                 return m.author.id === message.author.id;
             }
 
             const collector = channel.createMessageCollector({
                 filter,
                 time: 36000 * 1000
-            });
+            })
 
             collector.on('collect', async m => {
                 if(m.author.bot) return;
@@ -54,19 +55,18 @@ export default {
                 } else {
                     collector.stop('done')
                 }
+            })
 
-
-                collector.on('end', (collected, reason) => {
-                    if(reason === 'succ') {
-                        let index = 1;
-                        let quest = collected.map((msg) => `${index++}) ${questions[endCounter++]} » \`${msg.content}\``).join("\n");
-
-                        let embed = new MessageEmbed()
-                            .setAuthor(collected.first().author.username, collected.first().author.avatarURL({dynamic: true}))
-                            .setDescription(`**Reason**: ${String(questions[0])}\n\n${quest}`)
-                        channel.send({ embeds: [ embed ]});
-                    }
-                })
+            collector.on('end', (collected, reason) => {
+                if(reason === 'done') {
+                    let index = 1;
+                    let quest = collected.map((msg) => `${index++}) ${questions[endCounter++]} » \`${msg.content}\``).join("\n");
+                    let embed = new MessageEmbed()
+                        .setAuthor(message.author.username, message.author.displayAvatarURL({ dynamic: true }))
+                        .setDescription(`**Reason**: ${String(questions[0])}\n\n${quest}`)
+                        .setColor('BLURPLE')
+                    channel.send({ embeds: [embed] })
+                }
             })
         });
     }
