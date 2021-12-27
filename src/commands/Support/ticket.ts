@@ -1,5 +1,6 @@
 import {ICommand} from "wokcommands";
-import {MessageEmbed, TextChannel, User} from "discord.js";
+import {MessageEmbed} from "discord.js";
+const discordTranscripts = require("discord-html-transcripts");
 
 let questions = [
     "**What is the reason for this case?**",
@@ -65,7 +66,24 @@ export default {
                         .setAuthor(message.author.username, message.author.displayAvatarURL({ dynamic: true }))
                         .setDescription(`**Reason**: ${String(questions[0])}\n\n${quest}`)
                         .setColor('BLURPLE')
-                    channel.send({ embeds: [embed] })
+                    channel.send({ embeds: [embed] }).then(m => {
+                        m.react('🔒');
+                        const rcollect = m.createReactionCollector({
+                            time: 3600 * 1000
+                        });
+
+                        rcollect.on('collect', (reaction, user) => {
+                            if(reaction.emoji.name === '🔒') {
+                                if(user.bot) return;
+                                const channel = message.channel;
+                                const attachment = discordTranscripts.createTranscript(channel);
+                                user.send({
+                                    files: [attachment]
+                                });
+                            }
+                        })
+
+                    })
                 }
             })
         });
